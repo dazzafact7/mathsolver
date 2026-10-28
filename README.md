@@ -89,6 +89,22 @@ Decimal operations are executed via cross-multiplication on internal weight matr
 
 ---
 
+## Global Configuration (`config.json`)
+
+All models and execution cores support centralized runtime configuration via `config.json`:
+
+```json
+{
+  "max_digits": 4,
+  "allow_negative": true
+}
+```
+
+- **`max_digits` (Integer, default: `4`):** Defines the maximum number of decimal places for floating-point and rational division results (rounded half-up). Whole numbers remain exact integers without trailing zeros.
+- **`allow_negative` (Boolean, default: `true`):** When set to `false`, negative intermediate or final calculation results are rejected (Fail-Closed).
+
+---
+
 ## System Flow
 
 ```
@@ -120,6 +136,7 @@ mathsolver/
 ├── GUIDE.md                  # Functional description and integration concepts
 ├── POTENTIAL.md              # Resource profiling and application domains
 ├── LICENSE                   # Apache 2.0
+├── config.json               # Central runtime configuration (max_digits, allow_negative)
 └── models/
     ├── math_core.pt          # Base arithmetic execution core (1.10 KiB)
     ├── math_core_full.pt     # Full execution core with sin/cos/sqrt/md5 (1.29 KiB)

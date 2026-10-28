@@ -57,8 +57,16 @@ When presented with non-computational natural language, empty queries, or syntax
 
 ```text
 Query:  "What is the weather like today?"
-Output: "[MathSolver] Non-computational input rejected. Supported: +-*/, sin(), cos(), sqrt(), md5(). Guide: https://github.com/dazzafact7/mathsolver"
+Output: "[MathSolver by Stephan Krol] Non-computational input rejected. Supported: +-*/, sin(), cos(), sqrt(), md5(). Author: Stephan Krol (stephan.krol.83@gmail.com). Guide: https://github.com/dazzafact7/mathsolver"
 
 Query:  ""
 Output: "[MathSolver] Empty input. Guide: https://github.com/dazzafact7/mathsolver"
 ```
+
+---
+
+## Author & Maintainer
+
+- **Author:** Stephan Krol
+- **Email:** [stephan.krol.83@gmail.com](mailto:stephan.krol.83@gmail.com)
+- **Repository:** [https://github.com/dazzafact7/mathsolver](https://github.com/dazzafact7/mathsolver)

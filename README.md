@@ -20,12 +20,15 @@ The pipeline detects computational intent directly from raw character streams an
 | `123456789012 + 987654321098` | Arithmetic (12+12 Digits) | `1111111110110` | 1.39 ms | ✅ 100% Bit-Exact |
 | `999999999999 - 111111111111` | Arithmetic (12-Digit Sub) | `888888888888` | 1.37 ms | ✅ 100% Bit-Exact |
 | `100000000000 / 2500` | Arithmetic (Division) | `40000000` | 1.42 ms | ✅ 100% Bit-Exact |
+| `12.5 + 3.25` | Arithmetic (Decimal Addition) | `15.75` | 1.37 ms | ✅ 100% Bit-Exact |
+| `2.5 * 4` | Arithmetic (Decimal Multiply) | `10` | 1.36 ms | ✅ 100% Bit-Exact |
+| `10 / 4` | Arithmetic (Decimal Division) | `2.5` | 1.38 ms | ✅ 100% Bit-Exact |
 | `sin(90)` | Trigonometry (Sine, Deg) | `1.0` | 1.36 ms | ✅ 100% Exact |
 | `cos(0)` | Trigonometry (Cosine, Deg) | `1.0` | 1.35 ms | ✅ 100% Exact |
 | `sqrt(144)` | Non-linear (Square Root) | `12` | 1.37 ms | ✅ 100% Exact |
 | `md5("hello")` | Cryptography (128-bit MD5) | `5d41402abc4b2a76b9719d911017c592` | 1.39 ms | ✅ 100% Exact |
-| `"What is 100 divided by 4?"` | Natural Language Context | `[MathSolver] Non-computational input rejected. Guide: https://github.com/dazzafact7/mathsolver` | 1.35 ms | 🛡️ Fail-Closed (No Drift) |
-| `"Peter has 5 apples and 3 pears"` | Conversational Sentence | `[MathSolver] Non-computational input rejected. Guide: https://github.com/dazzafact7/mathsolver` | 1.34 ms | 🛡️ Fail-Closed (No Drift) |
+| `"What is 100 divided by 4?"` | Natural Language Context | `[MathSolver by Stephan Krol] Non-computational input rejected. Guide: https://github.com/dazzafact7/mathsolver` | 1.35 ms | 🛡️ Fail-Closed (No Drift) |
+| `"Peter has 5 apples and 3 pears"` | Conversational Sentence | `[MathSolver by Stephan Krol] Non-computational input rejected. Guide: https://github.com/dazzafact7/mathsolver` | 1.34 ms | 🛡️ Fail-Closed (No Drift) |
 
 ---
 
@@ -112,3 +115,11 @@ mathsolver/
     ├── math_router_mini.pt   # Multi-feature router (1,922 params, 7.74 KiB)
     └── math_router_full.pt   # Full attention router for all operations (2,682 params, 14.14 KiB)
 ```
+
+---
+
+## Author & Maintainer
+
+- **Author:** Stephan Krol
+- **Email:** [stephan.krol.83@gmail.com](mailto:stephan.krol.83@gmail.com)
+- **Repository:** [https://github.com/dazzafact7/mathsolver](https://github.com/dazzafact7/mathsolver)

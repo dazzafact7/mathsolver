@@ -48,3 +48,17 @@ Step 2: Core Execution
 - **Zero Hallucination:** Operations are solved deterministically rather than generated via statistical next-token prediction.
 - **Strict Decoupling:** Isolating formal computation allows the language router to maintain minimal footprint.
 - **Low-Latency Execution:** The combined pipeline processes queries in 1.35 to 1.40 ms on standard single-core CPUs.
+
+---
+
+## 4. Input Validation & Diagnostics
+
+When presented with non-computational natural language, empty queries, or syntax anomalies, the system returns a concise diagnostic message referencing the documentation:
+
+```text
+Query:  "What is the weather like today?"
+Output: "[MathSolver] Non-computational input rejected. Supported: +-*/, sin(), cos(), sqrt(), md5(). Guide: https://github.com/dazzafact7/mathsolver"
+
+Query:  ""
+Output: "[MathSolver] Empty input. Guide: https://github.com/dazzafact7/mathsolver"
+```

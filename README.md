@@ -24,8 +24,8 @@ The pipeline detects computational intent directly from raw character streams an
 | `cos(0)` | Trigonometry (Cosine, Deg) | `1.0` | 1.35 ms | ✅ 100% Exact |
 | `sqrt(144)` | Non-linear (Square Root) | `12` | 1.37 ms | ✅ 100% Exact |
 | `md5("hello")` | Cryptography (128-bit MD5) | `5d41402abc4b2a76b9719d911017c592` | 1.39 ms | ✅ 100% Exact |
-| `"What is 100 divided by 4?"` | Natural Language Context | *Rejected* | 1.35 ms | 🛡️ Fail-Closed (No Drift) |
-| `"Peter has 5 apples and 3 pears"` | Conversational Sentence | *Rejected* | 1.34 ms | 🛡️ Fail-Closed (No Drift) |
+| `"What is 100 divided by 4?"` | Natural Language Context | `[MathSolver] Non-computational input rejected. Guide: https://github.com/dazzafact7/mathsolver` | 1.35 ms | 🛡️ Fail-Closed (No Drift) |
+| `"Peter has 5 apples and 3 pears"` | Conversational Sentence | `[MathSolver] Non-computational input rejected. Guide: https://github.com/dazzafact7/mathsolver` | 1.34 ms | 🛡️ Fail-Closed (No Drift) |
 
 ---
 

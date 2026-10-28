@@ -8,7 +8,24 @@
 
 ---
 
-## 1. Sample Execution & Verification
+## 1. Quickstart & Installation
+
+### Requirements
+- **Python:** 3.8+
+- **PyTorch:** `torch >= 1.12.0` (Standard CPU build suffices; no CUDA or GPU required)
+
+```bash
+# 1. Clone repository
+git clone https://github.com/dazzafact7/mathsolver.git
+cd mathsolver
+
+# 2. Install dependencies (pure PyTorch)
+pip install torch
+```
+
+---
+
+## 2. Sample Execution & Verification
 
 The pipeline detects computational intent directly from character streams, extracts formal operations, and executes bit-exact results without statistical drift:
 
@@ -30,7 +47,7 @@ The pipeline detects computational intent directly from character streams, extra
 
 ---
 
-## 2. Complete Model Suite & Architecture Matrix
+## 3. Complete Model Suite & Architecture Matrix
 
 MathSolver provides tailored router modules and execution engines across both Transformer and Non-Transformer (MLP) paradigms:
 
@@ -45,7 +62,7 @@ MathSolver provides tailored router modules and execution engines across both Tr
 
 ---
 
-## 3. End-to-End Performance & Benchmark Comparison
+## 4. End-to-End Performance & Benchmark Comparison
 
 Evaluated on mixed workloads (formal calculations, multi-digit operations, decimal precision, functions, and natural language inputs) on a standard single-core CPU:
 
@@ -60,26 +77,66 @@ Evaluated on mixed workloads (formal calculations, multi-digit operations, decim
 
 ---
 
-## 4. Vector Extraction & Embedding Mode (MLP)
+## 5. Usage & Integration Guide
 
-The Non-Transformer MLP model provides direct vector extraction for Vector Databases, semantic search, and downstream neural networks via `extrahiere_vektor()`:
+### A. End-to-End Pipeline: Non-Transformer MLP (Fastest & Vector-Enabled)
+
+The MLP variant processes queries in **0.41 ms** without attention matrix overhead and connects directly to the execution core:
 
 ```python
 from mlp_math_model import MLPMathRouter
 
-router = MLPMathRouter.laden("models/math_router_mlp.pt")
-vektor = router.extrahiere_vektor("25 * 4")
+# 1. Initialize router and core
+router = MLPMathRouter.laden(
+    checkpoint_pfad="models/math_router_mlp.pt",
+    core_checkpoint="models/math_core_full.pt"
+)
 
-# Output:
-# - embedding_vektor: 16-dimensional dense latent representation
-# - gate_wahrscheinlichkeiten: {'text': 0.000036, 'mathe': 0.999964}
-# - operator_wahrscheinlichkeiten: {'ADD': 0.0, 'SUB': 0.0, 'MUL': 1.0, 'DIV': 0.0, ...}
-# - kombinierter_vektor: 10-dimensional continuous vector [P(Text), P(Math), P(Ops)...]
+# 2. Exact evaluation (Arithmetic, Trigonometry, Hashes)
+print(router.loese("19 * 3"))                     # -> '57'
+print(router.loese("sin(90) + sqrt(144)"))        # -> '13'
+print(router.loese('md5("admin")'))               # -> '21232f297a57a5a743894a0e4a801fc3'
+
+# 3. Fail-Closed protection on conversational language
+print(router.loese("What is 100 divided by 4?"))  # -> Rejected (Fail-Closed)
+```
+
+### B. Vector Extraction Mode (For Vector Databases & LLM Routing)
+
+Extract continuous semantic representations and discrete operator distribution vectors:
+
+```python
+vektor_info = router.extrahiere_vektor("25 * 4")
+
+# 16-dimensional dense embedding (for Vector DB search & retrieval):
+emb = vektor_info["embedding_vektor"]
+
+# Gate & operator probabilities:
+gate_p = vektor_info["gate_wahrscheinlichkeiten"]      # {'text': 0.000036, 'mathe': 0.999964}
+op_p   = vektor_info["operator_wahrscheinlichkeiten"]  # {'ADD': 0.0, 'MUL': 1.0, ...}
+
+# 10-dimensional concatenated continuous vector [Gate + Ops]:
+combo  = vektor_info["kombinierter_vektor"]
+```
+
+### C. Standalone Core Execution (Zero Overhead: 14 µs)
+
+If input validation is handled upstream and raw execution speed is needed:
+
+```python
+from math_solver_full_engine import MathSolverFullEngine
+
+# Load 1.29 KiB execution core
+core = MathSolverFullEngine("models/math_core_full.pt")
+
+# Multi-digit operations with 100% precision
+result = core.evaluiere_ausdruck("123456789012345 * 987654321098765")
+print(result) # -> 121932631112635246901358901125
 ```
 
 ---
 
-## 5. Global Configuration (`config.json`)
+## 6. Global Configuration (`config.json`)
 
 All execution pipelines are governed centrally via `config.json`:
 
@@ -90,12 +147,49 @@ All execution pipelines are governed centrally via `config.json`:
 }
 ```
 
-- **`max_digits` (Integer, default: `4`):** Global decimal rounding threshold for floating-point and rational division (rounded half-up). Whole numbers remain exact integers without trailing zeros.
-- **`allow_negative` (Boolean, default: `true`):** When set to `false`, negative numbers and subtractions below zero trigger an immediate Fail-Closed rejection.
+- **`max_digits` (Integer, default: `4`):** Defines the maximum number of decimal places for floating-point and rational division results (rounded half-up). Whole numbers remain exact integers without trailing zeros.
+- **`allow_negative` (Boolean, default: `true`):** When set to `false`, negative numbers and intermediate subtractions below zero trigger an immediate Fail-Closed rejection.
 
 ---
 
-## 6. System Architecture
+## 7. Model Training & Re-Generation
+
+All routers can be retrained and re-quantized (`float16` + LZMA) through the unified CLI:
+
+```bash
+# Train a specific model variant:
+python test_scripts/math_solver/train_router.py --model mlp     # Non-Transformer MLP (1,690 params)
+python test_scripts/math_solver/train_router.py --model nano    # Nano Attention Transformer (718 params)
+python test_scripts/math_solver/train_router.py --model full    # Full Attention Transformer (2,682 params)
+python test_scripts/math_solver/train_router.py --model mini    # Multi-Head Transformer (3,056 params)
+
+# Train all models and synchronize checkpoints:
+python test_scripts/math_solver/train_router.py --model all
+
+# Freshly render all 5 checkpoints + models:
+python test_scripts/math_solver/render_all_checkpoints.py
+```
+
+---
+
+## 8. Verification & Test Suite
+
+Run the full verification suite to audit mathematical correctness, weights integrity, and null-probe assertions:
+
+```bash
+# 1. Comprehensive 8-stage audit (100% PASS):
+python test_scripts/math_solver/test_math_solver_full.py
+
+# 2. Weights integrity & G0-T null-probe check:
+python test_scripts/math_solver/pruefe_nullprobe.py
+
+# 3. High-throughput execution benchmark:
+python test_scripts/math_solver/benchmark_math_solver.py
+```
+
+---
+
+## 9. System Flow & Architecture
 
 ```text
 Input Expression / Text

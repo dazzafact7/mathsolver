@@ -24,17 +24,17 @@ Step 2: Core Execution
 ## 2. Model Variants
 
 ### A. Router Modules
-- **`math_router_nano.pt` (718 params, 3.20 KiB):**
+- **`math_router_nano.pt` (718 params, 2.20 KiB):**
   Specialized for 4-operator arithmetic (`+`, `-`, `*`, `/`) up to 12 digits per operand. Designed for extreme parameter budgets (< 1,000 parameters).
-- **`math_router_mini.pt` (1,922 params, 7.74 KiB):**
+- **`math_router_mini.pt` (3,056 params, 6.68 KiB):**
   Balanced router variant with multi-head attention support for complex expression formatting.
-- **`math_router_full.pt` (2,682 params, 14.14 KiB):**
+- **`math_router_full.pt` (2,682 params, 5.84 KiB):**
   Full router supporting arithmetic, non-linear functions (`sqrt`), trigonometry (`sin`, `cos`), and cryptographic hashing (`md5`).
 
 ### B. Execution Core Modules
-- **`math_core.pt` (5.67 KiB):**
+- **`math_core.pt` (1.10 KiB):**
   Base execution core for multi-digit addition, subtraction, multiplication, and division up to 100+ digits.
-- **`math_core_full.pt` (8.33 KiB):**
+- **`math_core_full.pt` (1.29 KiB):**
   Extended core supporting arbitrary multi-digit arithmetic plus:
   - `sin(deg/rad)`: Discretized trigonometric sine calculation.
   - `cos(deg/rad)`: Discretized trigonometric cosine calculation.
@@ -47,7 +47,7 @@ Step 2: Core Execution
 
 - **Zero Hallucination:** Operations are solved deterministically rather than generated via statistical next-token prediction.
 - **Strict Decoupling:** Isolating formal computation allows the language router to maintain minimal footprint.
-- **Low-Latency Execution:** The combined pipeline processes queries in 1.35 to 1.40 ms on standard single-core CPUs.
+- **Low-Latency Execution:** The combined pipeline processes queries in 1.09 to 1.25 ms on standard single-core CPUs.
 
 ---
 

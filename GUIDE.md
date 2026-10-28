@@ -6,35 +6,45 @@ This guide outlines the conceptual pipeline and operational behavior of the prov
 
 ## 1. Pipeline Stages
 
-The system decouples natural language understanding from mathematical computation:
+The system decouples natural language understanding from computational execution:
 
 ```text
 Step 1: Input Evaluation
-  - The router processes the incoming text via attention mechanisms.
-  - Generates confidence scores for mathematical intent vs. text context.
-  - If language context is present, the gate remains inactive (Fail-Closed).
+  - The router evaluates the incoming token stream via self-attention.
+  - Distinguishes computational commands from conversational language.
+  - If conversational text is present, the gate remains inactive (Fail-Closed).
 
-Step 2: Arithmetic Evaluation
-  - If pure arithmetic is detected, the expression is evaluated by the dedicated core.
-  - Returns exact numerical outputs without token-prediction drift.
+Step 2: Core Execution
+  - If formal computation is confirmed, the expression is delegated to the execution core.
+  - Returns deterministic numerical solutions or cryptographic hashes without statistical drift.
 ```
 
 ---
 
-## 2. Model Roles
+## 2. Model Variants
 
-### A. Router Module (`math_router_nano.pt`)
-- **Function:** Intent filtering and expression validation.
-- **Fail-Closed Principle:** Non-mathematical phrases, mixed conversation, or ambiguous queries are rejected by design. This avoids erroneous execution triggers.
+### A. Router Modules
+- **`math_router_nano.pt` (718 params, 3.20 KiB):**
+  Specialized for 4-operator arithmetic (`+`, `-`, `*`, `/`) up to 12 digits per operand. Designed for extreme parameter budgets (< 1,000 parameters).
+- **`math_router_mini.pt` (1,922 params, 7.74 KiB):**
+  Balanced router variant with multi-head attention support for complex expression formatting.
+- **`math_router_full.pt` (2,682 params, 14.14 KiB):**
+  Full router supporting arithmetic, non-linear functions (`sqrt`), trigonometry (`sin`, `cos`), and cryptographic hashing (`md5`).
 
-### B. Core Module (`math_core.pt`)
-- **Function:** Numerical computation.
-- **Behavior:** Operates as a specialized computational unit designed for multi-digit precision across standard operators (`+`, `-`, `*`, `/`).
+### B. Execution Core Modules
+- **`math_core.pt` (5.67 KiB):**
+  Base execution core for multi-digit addition, subtraction, multiplication, and division up to 100+ digits.
+- **`math_core_full.pt` (8.33 KiB):**
+  Extended core supporting arbitrary multi-digit arithmetic plus:
+  - `sin(deg/rad)`: Discretized trigonometric sine calculation.
+  - `cos(deg/rad)`: Discretized trigonometric cosine calculation.
+  - `sqrt(x)`: Exact square root for perfect squares; precision float for arbitrary numbers.
+  - `md5(data)`: Deterministic 128-bit MD5 hex digest for strings and numerical payloads.
 
 ---
 
 ## 3. Key Properties
 
-- **Zero Hallucination:** Computations are evaluated deterministically rather than generated via statistical sampling.
-- **Decoupled Footprint:** Offloading formal math from the language processor allows the router to remain under 1,000 parameters.
-- **Resource Efficiency:** The entire two-module pipeline executes in under 2 milliseconds on standard CPU cores.
+- **Zero Hallucination:** Operations are solved deterministically rather than generated via statistical next-token prediction.
+- **Strict Decoupling:** Isolating formal computation allows the language router to maintain minimal footprint.
+- **Low-Latency Execution:** The combined pipeline processes queries in 1.35 to 1.40 ms on standard single-core CPUs.

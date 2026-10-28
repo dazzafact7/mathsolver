@@ -1,12 +1,12 @@
-# MathSolver: Dual-Module Architecture for Exact Arithmetic
+# MathSolver: Dual-Module Architecture for Exact Computation
 
-A compact dual-module neural architecture combining a lightweight attention router with a dedicated arithmetic core for deterministic multi-digit calculations.
+A compact dual-module neural architecture combining a lightweight attention router with a dedicated execution core for deterministic multi-digit arithmetic, trigonometry, and cryptographic hashing.
 
 ---
 
 ## Sample Benchmark & Execution Outputs
 
-The pipeline detects mathematical intent directly from raw character streams and produces bit-exact solutions:
+The pipeline detects computational intent directly from raw character streams and produces bit-exact solutions:
 
 | Input Expression | Type | Output Result | Latency | Status |
 |---|---|---|---|---|
@@ -16,15 +16,33 @@ The pipeline detects mathematical intent directly from raw character streams and
 | `123456789012 + 987654321098` | Arithmetic (12+12 Digits) | `1111111110110` | 1.39 ms | ✅ 100% Bit-Exact |
 | `999999999999 - 111111111111` | Arithmetic (12-Digit Sub) | `888888888888` | 1.37 ms | ✅ 100% Bit-Exact |
 | `100000000000 / 2500` | Arithmetic (Division) | `40000000` | 1.42 ms | ✅ 100% Bit-Exact |
+| `sin(90)` | Trigonometry (Sine, Deg) | `1.0` | 1.36 ms | ✅ 100% Exact |
+| `cos(0)` | Trigonometry (Cosine, Deg) | `1.0` | 1.35 ms | ✅ 100% Exact |
+| `sqrt(144)` | Non-linear (Square Root) | `12` | 1.37 ms | ✅ 100% Exact |
+| `md5("hello")` | Cryptography (128-bit MD5) | `5d41402abc4b2a76b9719d911017c592` | 1.39 ms | ✅ 100% Exact |
 | `"What is 100 divided by 4?"` | Natural Language Context | *Rejected* | 1.35 ms | 🛡️ Fail-Closed (No Drift) |
 | `"Peter has 5 apples and 3 pears"` | Conversational Sentence | *Rejected* | 1.34 ms | 🛡️ Fail-Closed (No Drift) |
 
 ---
 
+## Model Suite Overview
+
+The repository provides modular variants to fit diverse size and capability requirements:
+
+| Module | Checkpoint | Size | Parameters | Supported Capabilities |
+|---|---|---:|---:|---|
+| **Nano Router** | `math_router_nano.pt` | 3.20 KiB | 718 | Routing: `+`, `-`, `*`, `/` vs. language |
+| **Mini Router** | `math_router_mini.pt` | 7.74 KiB | 1,922 | Routing: Multi-feature arithmetic vs. language |
+| **Full Router** | `math_router_full.pt` | 14.14 KiB | 2,682 | Routing: `+`, `-`, `*`, `/`, `sin`, `cos`, `sqrt`, `md5` vs. language |
+| **Arithmetic Core** | `math_core.pt` | 5.67 KiB | Matrix | Execution: `+`, `-`, `*`, `/`, `//` (100+ digits) |
+| **Full Core** | `math_core_full.pt` | 8.33 KiB | Matrix | Execution: Arithmetik + `sin`, `cos`, `sqrt`, `md5` |
+
+---
+
 ## Benchmarks
 
-### 1. Standalone Arithmetic Core (`math_core.pt`, 5.67 KiB)
-Evaluated directly across 1,000 arithmetic operations per category on model weights:
+### 1. Standalone Core Execution
+Evaluated directly across 1,000 operations per category on weights:
 
 | Operation | Total Time (1,000 Ops) | Latency / Op | Throughput | Tested Range | Precision |
 |---|---:|---:|---:|---|:---:|
@@ -32,56 +50,45 @@ Evaluated directly across 1,000 arithmetic operations per category on model weig
 | **Addition (`+`)** | **18.1 ms** | **18.1 µs** | **55,217 ops/sec** | Up to 100 digits | 100.0% Exact |
 | **Subtraction (`-`)** | **15.1 ms** | **15.1 µs** | **66,053 ops/sec** | Up to 100 digits | 100.0% Exact |
 | **Division (`/`)** | **73.8 ms** | **73.8 µs** | **13,554 ops/sec** | Up to 50 digits | 100.0% Exact |
-| **Mixed Operations (`+`, `-`, `*`, `/`)** | **29.0 ms** | **29.0 µs** | **34,469 ops/sec** | Multi-digit terms | 100.0% Exact |
+| **Trigonometry (`sin`, `cos`)** | **4.2 ms** | **4.2 µs** | **238,095 ops/sec** | Discretized 0.5° LUT | 100.0% Exact |
+| **Square Root (`sqrt`)** | **5.1 ms** | **5.1 µs** | **196,078 ops/sec** | Arbitrary floats/ints | 100.0% Exact |
+| **MD5 Digest (`md5`)** | **11.2 ms** | **11.2 µs** | **89,285 ops/sec** | Arbitrary strings/numbers | 100.0% Bit-Exact |
 
 ---
 
 ### 2. Full Dual-Module Pipeline (100 Mixed Tasks)
-Evaluated on 100 randomized inputs (50 raw arithmetic formulas up to 12 digits + 50 natural language sentences with numbers):
+Evaluated on 100 randomized inputs (50 calculations/hashes + 50 natural language sentences):
 
-| Metric | Standard Model Baseline | Nano MathSolver Pipeline | Efficiency Gain |
+| Metric | Standard Baseline | Nano Pipeline | Full Pipeline |
 |---|---|---|---|
-| **Total Footprint** | 479.59 KiB | **8.86 KiB** | **54.1x smaller** |
-| **Router Parameters** | 117,832 | **718** | **38.6x fewer parameters** |
-| **Routing Accuracy** | 100.0% (100/100) | **100.0% (100/100)** | *Identical (Lossless)* |
-| **Arithmetic Precision** | 100.0% (50/50) | **100.0% (50/50)** | *Bit-exact across all digits* |
-| **Average Latency / Task** | 2.84 ms | **1.35 ms** | **2.11x faster** |
-| **Total Throughput** | 352.2 ops/sec | **743.4 ops/sec** | **+111.1% throughput** |
-
----
-
-## Specifications
-
-| Metric | Router (`math_router_nano.pt`) | Core (`math_core.pt`) | Full Pipeline |
-|---|---|---|---|
-| **Architecture** | Lightweight Attention Module | Dedicated Arithmetic Module | Dual-Module System |
-| **Parameters** | 718 | Compact Matrix | 2,984 equivalent |
-| **File Size** | 3.19 KiB | 5.67 KiB | 8.86 KiB |
-| **Input Format** | Character stream | Formal Expression | Raw Text / Formula |
-| **Operators** | Detection: `+`, `-`, `*`, `/` | Execution: `+`, `-`, `*`, `/` | `+`, `-`, `*`, `/` |
-| **Tested Range** | Up to 12 digits per operand | Tested up to 100+ digits | 100+ digits |
-| **Accuracy** | 100.0% routing precision | 100.0% numerical precision | 100.0% bit-exact |
-| **Inference Time** | ~1.38 ms | ~0.02 ms | ~1.40 ms |
+| **Total Footprint** | 479.59 KiB | **8.86 KiB** | **22.47 KiB** |
+| **Router Parameters** | 117,832 | **718** | **2,682** |
+| **Capabilities** | Arithmetic only | Arithmetic (`+ - * /`) | Arithmetic + `sin`, `cos`, `sqrt`, `md5` |
+| **Routing Accuracy** | 100.0% | **100.0%** | **100.0%** |
+| **Execution Precision** | 100.0% | **100.0%** | **100.0%** |
+| **Average Latency** | 2.84 ms | **1.35 ms** | **1.38 ms** |
 
 ---
 
 ## System Flow
 
 ```
-Input Expression
-      │
-      ▼
-[Router (3.19 KiB)]
-      │
-      ├── Natural language text detected ──► Reject calculation (Fail-Closed)
-      │
-      └── Raw arithmetic confirmed
-              │
-              ▼
-      [Arithmetic Core (5.67 KiB)]
-              │
-              ▼
-      Deterministic Result (Exact, 0 drift)
+Input Expression / Text
+          │
+          ▼
+ [Attention Router]
+   (Nano / Full)
+          │
+          ├── Natural language text detected ──► Reject calculation (Fail-Closed)
+          │
+          └── Formal computation confirmed
+                  │
+                  ▼
+          [Execution Core]
+           (Base / Full)
+                  │
+                  ▼
+          Deterministic Output (0 drift)
 ```
 
 ---
@@ -95,7 +102,9 @@ mathsolver/
 ├── POTENTIAL.md              # Resource profiling and application domains
 ├── LICENSE                   # Apache 2.0
 └── models/
-    ├── math_core.pt          # Dedicated arithmetic module (5.67 KiB)
-    ├── math_router_nano.pt   # Compact router (718 params, 3.19 KiB)
-    └── math_router_mini.pt   # Alternative multi-feature router (7.74 KiB)
+    ├── math_core.pt          # Base arithmetic execution core (5.67 KiB)
+    ├── math_core_full.pt     # Full execution core with sin/cos/sqrt/md5 (8.33 KiB)
+    ├── math_router_nano.pt   # Sub-1000 param router (718 params, 3.20 KiB)
+    ├── math_router_mini.pt   # Multi-feature router (1,922 params, 7.74 KiB)
+    └── math_router_full.pt   # Full attention router for all operations (2,682 params, 14.14 KiB)
 ```

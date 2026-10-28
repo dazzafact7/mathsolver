@@ -6,7 +6,7 @@
 
 Standard autoregressive language models experience compounding uncertainty when generating multi-digit calculations or precise hash strings sequentially.
 
-By separating intent classification from deterministic evaluation, this dual-module setup provides distinct properties:
+By separating intent classification from deterministic evaluation, this decoupled setup provides distinct properties:
 - **Consistent Precision:** Numerical results maintain 100% precision across tested ranges up to 100+ digits.
 - **Cryptographic Consistency:** Hash digests (`md5`) are computed with bit-level accuracy without token drift.
 - **Minimal Resource Footprint:** Total footprint across models ranges from 8.86 KiB (Nano) to 22.47 KiB (Full).

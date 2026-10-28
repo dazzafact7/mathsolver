@@ -1,6 +1,6 @@
-# MathSolver: Dual-Module Architecture for Exact Computation
+# MathSolver: Ultra-Compact Neural Models for Exact Computation
 
-A compact dual-module neural architecture combining a lightweight attention router with a dedicated execution core for deterministic multi-digit arithmetic, trigonometry, and cryptographic hashing.
+A compact neural system combining a lightweight attention router with an exact execution core for deterministic multi-digit arithmetic, trigonometry, and cryptographic hashing.
 
 ---
 
@@ -56,7 +56,7 @@ Evaluated directly across 1,000 operations per category on weights:
 
 ---
 
-### 2. Full Dual-Module Pipeline (100 Mixed Tasks)
+### 2. End-to-End Pipeline Evaluation (100 Mixed Tasks)
 Evaluated on 100 randomized inputs (50 calculations/hashes + 50 natural language sentences):
 
 | Metric | Standard Baseline | Nano Pipeline | Full Pipeline |

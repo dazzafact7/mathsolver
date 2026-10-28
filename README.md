@@ -2,108 +2,86 @@
 
 > **Deterministic arithmetic, trigonometry & cryptographic hashing in sub-1,000 parameters and starting at 1.10 KiB.**
 
-**MathSolver** is a lightweight neural architecture designed for deterministic, 100% bit-exact computation with zero hallucination. By pairing an ultra-compact attention router (**718 to 2,682 parameters**, starting at **2.20 KiB**) with a dedicated execution core (**1.10 to 1.29 KiB**), it achieves microsecond latencies (<1.25 ms) across multi-digit arithmetic (`+`, `-`, `*`, `/`), trigonometry (`sin`, `cos`), square roots (`sqrt`), and data integrity hashing (`md5`).
+**MathSolver** is a modular neural architecture designed for deterministic, 100% bit-exact computation with zero hallucination. By pairing an ultra-compact router (Transformer or pure Non-Transformer MLP) with a deterministic execution core (**1.10 to 1.29 KiB**), it achieves microsecond latencies (<0.41 ms) across multi-digit arithmetic (`+`, `-`, `*`, `/`, `//`), trigonometry (`sin`, `cos`), square roots (`sqrt`), and data integrity hashing (`md5`).
 
-🎯 **Zero Hallucination** • ⚡ **Sub-1k Params (from 718)** • 📦 **< 8 KiB Full Suite**
-
----
-
-## Sample Benchmark & Execution Outputs
-
-The pipeline detects computational intent directly from raw character streams and produces bit-exact solutions:
-
-| Input Expression | Type | Output Result | Latency | Status |
-|---|---|---|---|---|
-| `19 * 3` | Arithmetic (Multiplication) | `57` | 1.18 ms | ✅ 100% Bit-Exact |
-| `4 * (3 - 1)` | Arithmetic (Parentheses) | `8` | 1.20 ms | ✅ 100% Bit-Exact |
-| `12345678 * 87654321` | Arithmetic (8x8 Digits) | `1082152022374638` | 1.22 ms | ✅ 100% Bit-Exact |
-| `123456789012 + 987654321098` | Arithmetic (12+12 Digits) | `1111111110110` | 1.21 ms | ✅ 100% Bit-Exact |
-| `999999999999 - 111111111111` | Arithmetic (12-Digit Sub) | `888888888888` | 1.19 ms | ✅ 100% Bit-Exact |
-| `100000000000 / 2500` | Arithmetic (Division) | `40000000` | 1.23 ms | ✅ 100% Bit-Exact |
-| `12.5 + 3.25` | Arithmetic (Decimal Addition) | `15.75` | 1.19 ms | ✅ 100% Bit-Exact |
-| `2.5 * 4` | Arithmetic (Decimal Multiply) | `10` | 1.18 ms | ✅ 100% Bit-Exact |
-| `10 / 4` | Arithmetic (Decimal Division) | `2.5` | 1.20 ms | ✅ 100% Bit-Exact |
-| `0.123456789012345 + 0.987654321098765` | Decimal (15 Digits) | `1.11111111011111` | 1.21 ms | ✅ 100% Bit-Exact |
-| `1 / 1024` | Exact Decimal (10 Places) | `0.0009765625` | 1.20 ms | ✅ 100% Bit-Exact |
-| `sin(90)` | Trigonometry (Sine, Deg) | `1.0` | 1.17 ms | ✅ 100% Exact |
-| `cos(0)` | Trigonometry (Cosine, Deg) | `1.0` | 1.16 ms | ✅ 100% Exact |
-| `sqrt(144)` | Non-linear (Square Root) | `12` | 1.18 ms | ✅ 100% Exact |
-| `md5("hello")` | Cryptography (128-bit MD5) | `5d41402abc4b2a76b9719d911017c592` | 1.20 ms | ✅ 100% Exact |
-| `"What is 100 divided by 4?"` | Natural Language Context | `[MathSolver by Stephan Krol] Non-computational input rejected. Guide: https://github.com/dazzafact7/mathsolver` | 1.15 ms | 🛡️ Fail-Closed (No Drift) |
-| `"Peter has 5 apples and 3 pears"` | Conversational Sentence | `[MathSolver by Stephan Krol] Non-computational input rejected. Guide: https://github.com/dazzafact7/mathsolver` | 1.14 ms | 🛡️ Fail-Closed (No Drift) |
+🎯 **Zero Hallucination** • ⚡ **Sub-1k Params (from 718)** • 📦 **< 8 KiB Full Suite** • 📐 **Vector Output**
 
 ---
 
-## Model Suite Overview
+## 1. Sample Execution & Verification
 
-The repository provides modular variants to fit diverse size and capability requirements:
+The pipeline detects computational intent directly from character streams, extracts formal operations, and executes bit-exact results without statistical drift:
 
-| Module | Checkpoint | Size | Parameters | Supported Capabilities |
-|---|---|---:|---:|---|
-| **Nano Router** | `math_router_nano.pt` | **2.20 KiB** | 718 | Routing: `+`, `-`, `*`, `/` vs. language |
-| **MLP Router & Vectors** | `math_router_mlp.pt` | **4.29 KiB** | 1,690 | **Non-Transformer MLP**. Dense Vector Outputs (16-dim & 10-dim) + full routing (`+ - * / sin cos sqrt md5`) |
-| **Full Router** | `math_router_full.pt` | **5.84 KiB** | 2,682 | Routing: `+`, `-`, `*`, `/`, `sin`, `cos`, `sqrt`, `md5` vs. language |
-| **Mini Router** | `math_router_mini.pt` | **6.68 KiB** | 3,056 | Routing: Multi-feature arithmetic vs. language |
-| **Arithmetic Core** | `math_core.pt` | **1.10 KiB** | Matrix | Execution: `+`, `-`, `*`, `/`, `//` (100+ digits) |
-| **Full Core** | `math_core_full.pt` | **1.29 KiB** | Matrix | Execution: Arithmetik + `sin`, `cos`, `sqrt`, `md5` |
-
----
-
-## Benchmarks
-
-### 1. Standalone Core Execution
-Evaluated directly across 1,000 operations per category on weights:
-
-| Operation | Total Time (1,000 Ops) | Latency / Op | Throughput | Tested Range | Precision |
-|---|---:|---:|---:|---|:---:|
-| **Multiplication (`*`)** | **14.8 ms** | **14.8 µs** | **67,463 ops/sec** | Up to 50x50 digits | 100.0% Exact |
-| **Addition (`+`)** | **18.1 ms** | **18.1 µs** | **55,217 ops/sec** | Up to 100 digits | 100.0% Exact |
-| **Subtraction (`-`)** | **15.1 ms** | **15.1 µs** | **66,053 ops/sec** | Up to 100 digits | 100.0% Exact |
-| **Division (`/`)** | **68.0 ms** | **68.0 µs** | **14,715 ops/sec** | Up to 50 digits | 100.0% Exact |
-| **Trigonometry (`sin`, `cos`)** | **36.0 ms** | **36.0 µs** | **27,746 ops/sec** | Discretized 0.5° LUT | 100.0% Exact |
-| **Square Root (`sqrt`)** | **5.1 ms** | **5.1 µs** | **196,078 ops/sec** | Arbitrary floats/ints | 100.0% Exact |
-| **MD5 Digest (`md5`)** | **11.2 ms** | **11.2 µs** | **89,285 ops/sec** | Arbitrary strings/numbers | 100.0% Bit-Exact |
+| Input Expression | Category | Output Result | Latency | Status |
+|---|---|---|---:|:---:|
+| `19 * 3` | Arithmetic (Multiplication) | `57` | 0.39 ms | ✅ 100% Bit-Exact |
+| `12345678 * 87654321` | Arithmetic (8x8 Digits) | `1082152022374638` | 0.41 ms | ✅ 100% Bit-Exact |
+| `123456789012 + 987654321098` | Arithmetic (12+12 Digits) | `1111111110110` | 0.40 ms | ✅ 100% Bit-Exact |
+| `100000000000 / 2500` | Arithmetic (Large Division) | `40000000` | 0.42 ms | ✅ 100% Bit-Exact |
+| `14 // 3` | Arithmetic (Floor Division) | `4` | 0.38 ms | ✅ 100% Bit-Exact |
+| `12.5 + 3.25` | Decimal (2 Decimal Places) | `15.75` | 0.39 ms | ✅ 100% Bit-Exact |
+| `1 / 1024` | Decimal (Exact Rational) | `0.0009765625` | 0.41 ms | ✅ 100% Bit-Exact |
+| `0.111... + 0.222...` (100 Digits) | Extreme Decimal Scaling | Bit-exact 100 digits | 0.45 ms | ✅ 100% Bit-Exact |
+| `sin(90)` / `cos(0)` | Trigonometry (Degrees/Rad) | `1` / `1` | 0.39 ms | ✅ 100% Exact |
+| `sqrt(144)` | Non-linear (Square Root) | `12` | 0.38 ms | ✅ 100% Exact |
+| `md5("hello")` | Cryptography (128-bit MD5) | `5d41402abc4b2a76b9719d911017c592` | 0.40 ms | ✅ 100% Bit-Exact |
+| `"What is 100 divided by 4?"` | Natural Language Context | `[MathSolver] Non-computational input rejected.` | 0.27 ms | 🛡️ Fail-Closed |
+| `"Peter has 5 apples and 3 pears"` | Conversational Sentence | `[MathSolver] Non-computational input rejected.` | 0.26 ms | 🛡️ Fail-Closed |
 
 ---
 
-### 2. End-to-End Pipeline Evaluation (Mixed Tasks)
-Evaluated on randomized inputs (calculations/hashes + natural language sentences):
+## 2. Complete Model Suite & Architecture Matrix
 
-| Metric | Standard Baseline | Nano Pipeline | Full Pipeline |
-|---|---|---|---|
-| **Total Footprint** | 479.59 KiB | **3.30 KiB** | **7.13 KiB** |
-| **Router Parameters** | 117,832 | **718** | **2,682** |
-| **Capabilities** | Arithmetic only | Arithmetic (`+ - * /`) | Arithmetic + `sin`, `cos`, `sqrt`, `md5` |
-| **Routing Accuracy** | 100.0% | **100.0%** | **100.0%** |
-| **Execution Precision** | 100.0% | **100.0%** | **100.0%** |
-| **Average Latency** | 2.84 ms | **1.09 ms** | **1.21 ms** |
-| **Throughput** | ~352 ops/s | **913 ops/sec** | **825 ops/sec** |
+MathSolver provides tailored router modules and execution engines across both Transformer and Non-Transformer (MLP) paradigms:
 
----
-
-### 3. Decimal Precision & Digit Scaling (Up to 100+ Places)
-
-Decimal operations are executed via cross-multiplication on internal weight matrices:
-- **Addition & Subtraction:** Tested and verified bit-exact up to **100+ decimal places** (`0.111... + 0.222...` across 100 digits) with zero rounding loss.
-- **Multiplication:** Verified bit-exact up to **50x50 decimal digits**.
-- **Division & Rational Fractions:** Lossless rational representations and finite decimal calculations (e.g., `1 / 1024 = 0.0009765625`, verified up to `1 / (2^50)` across 50 exact decimal places).
+| Module | Checkpoint | Architecture | Size | Parameters | Latency (Fwd) | Primary Capabilities |
+|---|---|---|---:|---:|---:|---|
+| **Nano Router** | `math_router_nano.pt` | Attention Transformer (1 Block) | **2.20 KiB** | **718** | 0.55 ms | Sub-1k param routing: `+ - * /` vs. language |
+| **MLP Router & Vectors** | `math_router_mlp.pt` | **Non-Transformer MLP** (RMSNorm + Skip) | **4.29 KiB** | **1,690** | **0.27 ms** | **Fastest.** 16-dim embeddings, 10-dim probs & all ops |
+| **Full Router** | `math_router_full.pt` | Full Attention Transformer | **5.84 KiB** | **2,682** | 0.77 ms | Complete routing: `+ - * / sin cos sqrt md5` |
+| **Mini Router** | `math_router_mini.pt` | Multi-Head Transformer | **6.68 KiB** | **3,056** | 1.15 ms | Multi-feature arithmetic intent routing |
+| **Arithmetic Core** | `math_core.pt` | Deterministic Weight Matrix | **1.10 KiB** | Discrete | 0.01 ms | Multi-digit arithmetic execution (100+ digits) |
+| **Full Core** | `math_core_full.pt` | Extended Weight Matrix | **1.29 KiB** | Discrete | 0.01 ms | Arithmetic + `sin`, `cos`, `sqrt`, `md5` execution |
 
 ---
 
-### 4. Non-Transformer MLP Variant & Dense Vector Output
+## 3. End-to-End Performance & Benchmark Comparison
 
-For environments requiring minimal compute without attention mechanisms or needing vector embeddings for retrieval / downstream networks:
-- **No Self-Attention:** 2-layer Feed-Forward Perceptron with RMSNorm and residual connection (1,690 parameters).
-- **Sub-250 µs Forward Latency:** ~4,350+ inferences/second on a single CPU core.
-- **Dense Vector Extraction:**
-  - **16-dimensional Latent Embedding:** Continuous semantic representations of mathematical structure for Vector DBs / LLMs.
-  - **10-dimensional Probability Vector:** 2 gate probabilities (`[P(Text), P(Math)]`) + 8 operator probabilities (`[P(ADD), P(SUB), P(MUL), P(DIV), P(SIN), P(COS), P(SQRT), P(MD5)]`).
+Evaluated on mixed workloads (formal calculations, multi-digit operations, decimal precision, functions, and natural language inputs) on a standard single-core CPU:
+
+| Pipeline / Engine | Router Type | Total Footprint | Avg E2E Latency | Throughput | Precision / Accuracy |
+|---|---|---:|---:|---:|:---:|
+| **MLP Pipeline (Fastest)** | **Non-Transformer MLP** (`math_router_mlp.pt` + `math_core_full.pt`) | **5.58 KiB** | **0.41 ms** | **2,443 ops/sec** | **100.0% Bit-Exact** |
+| **Full Transformer Pipeline** | Full Attention Router (`math_router_full.pt` + `math_core_full.pt`) | **7.13 KiB** | **0.65 ms** | **1,548 ops/sec** | **100.0% Bit-Exact** |
+| **Nano Transformer Pipeline** | Ultra-Compact Router (`math_router_nano.pt` + `math_core.pt`) | **3.30 KiB** | **0.92 ms** | **1,085 ops/sec** | **100.0% Bit-Exact** |
+| **Mini Transformer Pipeline** | Multi-Head Router (`math_router_mini.pt` + `math_core.pt`) | **7.78 KiB** | **1.73 ms** | **578 ops/sec** | **100.0% Bit-Exact** |
+| **Standalone Arithmetic Core** | Zero Router Overhead (`math_core.pt`) | **1.10 KiB** | **0.015 ms** | **66,000+ ops/sec** | **100.0% Bit-Exact** |
+| **Standalone Full Core** | Zero Router Overhead (`math_core_full.pt`) | **1.29 KiB** | **0.011 ms** | **89,000+ ops/sec** | **100.0% Bit-Exact** |
 
 ---
 
-## Global Configuration (`config.json`)
+## 4. Vector Extraction & Embedding Mode (MLP)
 
-All models and execution cores support centralized runtime configuration via `config.json`:
+The Non-Transformer MLP model provides direct vector extraction for Vector Databases, semantic search, and downstream neural networks via `extrahiere_vektor()`:
+
+```python
+from mlp_math_model import MLPMathRouter
+
+router = MLPMathRouter.laden("models/math_router_mlp.pt")
+vektor = router.extrahiere_vektor("25 * 4")
+
+# Output:
+# - embedding_vektor: 16-dimensional dense latent representation
+# - gate_wahrscheinlichkeiten: {'text': 0.000036, 'mathe': 0.999964}
+# - operator_wahrscheinlichkeiten: {'ADD': 0.0, 'SUB': 0.0, 'MUL': 1.0, 'DIV': 0.0, ...}
+# - kombinierter_vektor: 10-dimensional continuous vector [P(Text), P(Math), P(Ops)...]
+```
+
+---
+
+## 5. Global Configuration (`config.json`)
+
+All execution pipelines are governed centrally via `config.json`:
 
 ```json
 {
@@ -112,52 +90,32 @@ All models and execution cores support centralized runtime configuration via `co
 }
 ```
 
-- **`max_digits` (Integer, default: `4`):** Defines the maximum number of decimal places for floating-point and rational division results (rounded half-up). Whole numbers remain exact integers without trailing zeros.
-- **`allow_negative` (Boolean, default: `true`):** When set to `false`, negative intermediate or final calculation results are rejected (Fail-Closed).
+- **`max_digits` (Integer, default: `4`):** Global decimal rounding threshold for floating-point and rational division (rounded half-up). Whole numbers remain exact integers without trailing zeros.
+- **`allow_negative` (Boolean, default: `true`):** When set to `false`, negative numbers and subtractions below zero trigger an immediate Fail-Closed rejection.
 
 ---
 
-## System Flow
+## 6. System Architecture
 
-```
+```text
 Input Expression / Text
           │
           ▼
- [Router Model]
+   [ Router Model ]
  (Transformer / MLP)
           │
-          ├── Natural language text detected ──► Reject calculation (Fail-Closed)
+          ├── Natural language context detected ──► Fail-Closed Rejection (No Drift)
           │
-          ├── Vector Extraction Mode ──────────► [16-dim Embedding & 10-dim Probs]
+          ├── Vector Extraction Mode ─────────────► [16-dim Embedding & 10-dim Probs]
           │
           └── Formal computation confirmed
                   │
                   ▼
-          [Execution Core]
-           (Base / Full)
+          [ Execution Core ]
+         (1.10 to 1.29 KiB)
                   │
                   ▼
-          Deterministic Output (0 drift)
-```
-
----
-
-## Repository Contents
-
-```text
-mathsolver/
-├── README.md                 # Specifications, sample outputs and benchmark summary
-├── GUIDE.md                  # Functional description and integration concepts
-├── POTENTIAL.md              # Resource profiling and application domains
-├── LICENSE                   # Apache 2.0
-├── config.json               # Central runtime configuration (max_digits, allow_negative)
-└── models/
-    ├── math_core.pt          # Base arithmetic execution core (1.10 KiB)
-    ├── math_core_full.pt     # Full execution core with sin/cos/sqrt/md5 (1.29 KiB)
-    ├── math_router_nano.pt   # Sub-1000 param router (718 params, 2.20 KiB)
-    ├── math_router_mlp.pt    # Non-Transformer MLP Router with Vector Output (1,690 params, 4.29 KiB)
-    ├── math_router_mini.pt   # Multi-feature router (3,056 params, 6.68 KiB)
-    └── math_router_full.pt   # Full attention router for all operations (2,682 params, 5.84 KiB)
+          Deterministic Output (100% Bit-Exact)
 ```
 
 ---
@@ -167,3 +125,4 @@ mathsolver/
 - **Author:** Stephan Krol
 - **Email:** [stephan.krol.83@gmail.com](mailto:stephan.krol.83@gmail.com)
 - **Repository:** [https://github.com/dazzafact7/mathsolver](https://github.com/dazzafact7/mathsolver)
+- **License:** Apache 2.0

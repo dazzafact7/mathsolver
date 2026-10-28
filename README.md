@@ -41,6 +41,7 @@ The repository provides modular variants to fit diverse size and capability requ
 | Module | Checkpoint | Size | Parameters | Supported Capabilities |
 |---|---|---:|---:|---|
 | **Nano Router** | `math_router_nano.pt` | **2.20 KiB** | 718 | Routing: `+`, `-`, `*`, `/` vs. language |
+| **MLP Router & Vectors** | `math_router_mlp.pt` | **4.29 KiB** | 1,690 | **Non-Transformer MLP**. Dense Vector Outputs (16-dim & 10-dim) + full routing (`+ - * / sin cos sqrt md5`) |
 | **Full Router** | `math_router_full.pt` | **5.84 KiB** | 2,682 | Routing: `+`, `-`, `*`, `/`, `sin`, `cos`, `sqrt`, `md5` vs. language |
 | **Mini Router** | `math_router_mini.pt` | **6.68 KiB** | 3,056 | Routing: Multi-feature arithmetic vs. language |
 | **Arithmetic Core** | `math_core.pt` | **1.10 KiB** | Matrix | Execution: `+`, `-`, `*`, `/`, `//` (100+ digits) |
@@ -89,6 +90,17 @@ Decimal operations are executed via cross-multiplication on internal weight matr
 
 ---
 
+### 4. Non-Transformer MLP Variant & Dense Vector Output
+
+For environments requiring minimal compute without attention mechanisms or needing vector embeddings for retrieval / downstream networks:
+- **No Self-Attention:** 2-layer Feed-Forward Perceptron with RMSNorm and residual connection (1,690 parameters).
+- **Sub-250 µs Forward Latency:** ~4,350+ inferences/second on a single CPU core.
+- **Dense Vector Extraction:**
+  - **16-dimensional Latent Embedding:** Continuous semantic representations of mathematical structure for Vector DBs / LLMs.
+  - **10-dimensional Probability Vector:** 2 gate probabilities (`[P(Text), P(Math)]`) + 8 operator probabilities (`[P(ADD), P(SUB), P(MUL), P(DIV), P(SIN), P(COS), P(SQRT), P(MD5)]`).
+
+---
+
 ## Global Configuration (`config.json`)
 
 All models and execution cores support centralized runtime configuration via `config.json`:
@@ -111,10 +123,12 @@ All models and execution cores support centralized runtime configuration via `co
 Input Expression / Text
           │
           ▼
- [Attention Router]
-   (Nano / Full)
+ [Router Model]
+ (Transformer / MLP)
           │
           ├── Natural language text detected ──► Reject calculation (Fail-Closed)
+          │
+          ├── Vector Extraction Mode ──────────► [16-dim Embedding & 10-dim Probs]
           │
           └── Formal computation confirmed
                   │
@@ -141,6 +155,7 @@ mathsolver/
     ├── math_core.pt          # Base arithmetic execution core (1.10 KiB)
     ├── math_core_full.pt     # Full execution core with sin/cos/sqrt/md5 (1.29 KiB)
     ├── math_router_nano.pt   # Sub-1000 param router (718 params, 2.20 KiB)
+    ├── math_router_mlp.pt    # Non-Transformer MLP Router with Vector Output (1,690 params, 4.29 KiB)
     ├── math_router_mini.pt   # Multi-feature router (3,056 params, 6.68 KiB)
     └── math_router_full.pt   # Full attention router for all operations (2,682 params, 5.84 KiB)
 ```

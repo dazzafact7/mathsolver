@@ -26,6 +26,8 @@ Step 2: Core Execution
 ### A. Router Modules
 - **`math_router_nano.pt` (718 params, 2.20 KiB):**
   Specialized for 4-operator arithmetic (`+`, `-`, `*`, `/`) up to 12 digits per operand. Designed for extreme parameter budgets (< 1,000 parameters).
+- **`math_router_mlp.pt` (1,690 params, 4.29 KiB):**
+  Non-Transformer MLP router (2-layer Perceptron with RMSNorm and skip connection). Zero self-attention overhead, sub-250 µs latency, with dense 16-dimensional embedding and 10-dimensional probability vector extraction.
 - **`math_router_mini.pt` (3,056 params, 6.68 KiB):**
   Balanced router variant with multi-head attention support for complex expression formatting.
 - **`math_router_full.pt` (2,682 params, 5.84 KiB):**
